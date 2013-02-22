@@ -1,0 +1,19 @@
+*         text=auto
+
+*.go      text
+
+*.htm     text diff=html
+*.html    text diff=html
+*.js      text
+*.css     text
+*.sql     text
+
+*.tex     text diff=tex
+*.bib     text diff=bibtex
+
+# Images should be treated as binary
+# (binary is a macro for -text -diff)
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+

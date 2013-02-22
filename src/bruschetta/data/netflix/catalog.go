@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"flag"
 	"github.com/garyburd/go-oauth/oauth"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,38 +13,38 @@ import (
 	"strconv"
 )
 
-type Catalog struct {
-	XMLName xml.Name `xml:"catalog_titles"`
-	Titles  []Title  `xml:"catalog_title"`
+type catalog struct {
+	XMLName xml.Name `xml:"catalog_titles" json:"-"`
+	Titles  []title  `xml:"catalog_title" json:"titles"`
 }
 
-type Title struct {
-	Id     string  `xml:"id"`
-	Name   name    `xml:"title"`
-	Year   string  `xml:"release_year"`
-	Rating float32 `xml:"average_rating"`
-	Boxart boxart  `xml:"box_art"`
-	Links  []link  `xml:"link"`
+type title struct {
+	Id     string  `xml:"id" json:"id"`
+	Name   name    `xml:"title" json:"name"`
+	Year   string  `xml:"release_year" json:"year"`
+	Rating float32 `xml:"average_rating" json:"rating"`
+	Boxart boxart  `xml:"box_art" json:"box_art"`
+	Links  []link  `xml:"link" json:"__links"`
 }
 
 // TODO: Having Name field in Title map to title>regular,attr should suffice
 // but it's not supported at the moment:
 // http://code.google.com/p/go/issues/detail?id=3688
 type name struct {
-	Short   string `xml:"short,attr"`
-	Regular string `xml:"regular,attr"`
+	Short   string `xml:"short,attr" json:"short"`
+	Regular string `xml:"regular,attr" json:"regular"`
 }
 
 type boxart struct {
-	Small  string `xml:"small,attr"`
-	Medium string `xml:"medium,attr"`
-	Large  string `xml:"large,attr"`
+	Small  string `xml:"small,attr" json:"small"`
+	Medium string `xml:"medium,attr" json:"medium"`
+	Large  string `xml:"large,attr" json:"large"`
 }
 
 type link struct {
-	URL  string `xml:"href,attr"`
-	Rel  string `xml:"rel,attr"`
-	Name string `xml:"title,attr"`
+	URL  string `xml:"href,attr" json:"url"`
+	Rel  string `xml:"rel,attr" json:"rel"`
+	Name string `xml:"title,attr" json:"name"`
 }
 
 var (
@@ -55,7 +56,7 @@ var (
 	configFile string
 )
 
-func Search(term string, max int) (*Catalog, error) {
+func Search(term string, max int) ([]byte, error) {
 	resp, err := client.Get(http.DefaultClient,
 		nil,
 		"http://api-public.netflix.com/catalog/titles",
@@ -69,9 +70,23 @@ func Search(term string, max int) (*Catalog, error) {
 	}
 	defer resp.Body.Close()
 
-	var content []byte
-	if content, err = ioutil.ReadAll(resp.Body); err == nil {
-		var catalog Catalog
+	content, err := unmarshal(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	json, err := json.Marshal(content.Titles)
+	if err != nil {
+		return nil, err
+	}
+
+	return json, nil
+}
+
+func unmarshal(reader io.Reader) (*catalog, error) {
+	var err error
+	if content, err := ioutil.ReadAll(reader); err == nil {
+		var catalog catalog
 		if err = unmarshalContent(content, &catalog); err == nil {
 			return &catalog, nil
 		}
@@ -91,7 +106,7 @@ func readConfig(c *oauth.Client) {
 	}
 }
 
-func unmarshalContent(content []byte, catalog *Catalog) error {
+func unmarshalContent(content []byte, catalog *catalog) error {
 	return xml.Unmarshal(content, catalog)
 }
 

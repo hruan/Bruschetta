@@ -23,10 +23,8 @@ func defaultApiHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
 
-	fmt.Fprintf(w, "Received:\n")
-	for i, v := range catalog.Titles {
-		fmt.Fprintf(w, "[%2v]: %+v\n", i, v)
-	}
+	w.Header().Add("Content-Type", "application/json")
+	fmt.Fprintf(w, "Received: %+v\n", string(catalog))
 }
 
 
@@ -36,7 +34,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Handle("/", http.FileServer(http.Dir(staticDir)))
-	r.HandleFunc("/api/1", defaultApiHandler)
+	r.HandleFunc("/api/v1", defaultApiHandler)
 
 	p := strconv.Itoa(port)
 	log.Print("Listening on port ", p)

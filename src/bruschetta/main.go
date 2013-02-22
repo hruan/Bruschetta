@@ -3,18 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
-	"data/netflix"
+	"bruschetta/data/netflix"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
 )
 
-const (
-	port = 8888
-)
+const port = 8888
 
-func defaultHandler(w http.ResponseWriter, req *http.Request) {
+var staticDir string
+
+func defaultApiHandler(w http.ResponseWriter, req *http.Request) {
 	log.Printf("Received %s %s request from %s", req.Method, req.URL, req.RemoteAddr)
 
 	catalog, err := netflix.Search("start", 5)
@@ -32,9 +32,11 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	flag.Parse()
+	flag.StringVar(&staticDir, "static", "content", "Directory from which to server static files")
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", defaultHandler)
+	r.Handle("/", http.FileServer(http.Dir(staticDir)))
+	r.HandleFunc("/api/1", defaultApiHandler)
 
 	p := strconv.Itoa(port)
 	log.Print("Listening on port ", p)

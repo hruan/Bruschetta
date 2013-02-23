@@ -87,7 +87,7 @@ func unmarshal(reader io.Reader) (*catalog, error) {
 	var err error
 	if content, err := ioutil.ReadAll(reader); err == nil {
 		var catalog catalog
-		if err = unmarshalContent(content, &catalog); err == nil {
+		if err = xml.Unmarshal(content, &catalog); err == nil {
 			return &catalog, nil
 		}
 	}
@@ -104,10 +104,6 @@ func readConfig(c *oauth.Client) {
 	if err := json.Unmarshal(b, &c.Credentials); err != nil {
 		log.Fatal("Couldn't unmarshal credentials: ", err)
 	}
-}
-
-func unmarshalContent(content []byte, catalog *catalog) error {
-	return xml.Unmarshal(content, catalog)
 }
 
 func init() {

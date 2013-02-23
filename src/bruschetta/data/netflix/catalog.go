@@ -89,16 +89,16 @@ func Search(term string, max int) ([]byte, error) {
 	return json, nil
 }
 
+
 func unmarshal(reader io.Reader) (*catalog, error) {
-	var err error
-	if content, err := ioutil.ReadAll(reader); err == nil {
-		var catalog catalog
-		if err = xml.Unmarshal(content, &catalog); err == nil {
-			return &catalog, nil
-		}
+	var catalog catalog
+	decoder := xml.NewDecoder(reader)
+	if err := decoder.Decode(&catalog); err != nil {
+		log.Printf("unmarshal: xml.Decode failed: %s\n", err)
+		return nil, err
 	}
 
-	return nil, err
+	return &catalog, nil
 }
 
 func readConfig(c *oauth.Client) {

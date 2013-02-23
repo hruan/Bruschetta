@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bruschetta/data/netflix"
 	"flag"
 	"fmt"
-	"bruschetta/data/netflix"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 const port = 8888
@@ -27,7 +28,6 @@ func defaultApiHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "Received: %+v\n", string(catalog))
 }
 
-
 func main() {
 	flag.Parse()
 	flag.StringVar(&staticDir, "static", "content", "Directory from which to server static files")
@@ -38,7 +38,13 @@ func main() {
 
 	p := strconv.Itoa(port)
 	log.Print("Listening on port ", p)
-	err := http.ListenAndServe(":" + p, r)
+	s := &http.Server{
+		Addr:         ":" + p,
+		Handler:      r,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	err := s.ListenAndServe()
 	if err != nil {
 		log.Fatal("Couldn't start server: ", err)
 	}

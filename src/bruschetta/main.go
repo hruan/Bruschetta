@@ -48,6 +48,8 @@ func main() {
 	flag.Parse()
 	flag.StringVar(&staticDir, "static", "content", "Directory from which to server static files")
 
+	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
+
 	r := mux.NewRouter()
 	r.Handle("/", http.FileServer(http.Dir(staticDir)))
 	r.HandleFunc("/api/1/{action:[a-z]+}", defaultApiHandler)

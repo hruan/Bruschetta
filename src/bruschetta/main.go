@@ -15,17 +15,35 @@ const port = 8888
 
 var staticDir string
 
-func defaultApiHandler(w http.ResponseWriter, req *http.Request) {
-	log.Printf("Received %s %s request from %s", req.Method, req.URL, req.RemoteAddr)
+func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received %s %s request from %s", r.Method, r.URL, r.RemoteAddr)
 
-	catalog, err := netflix.Search("start", 5)
-	if err != nil {
-		msg := fmt.Sprintf("Search failed: %s", err)
-		http.Error(w, msg, http.StatusInternalServerError)
+	q := r.URL.Query()
+	vars := mux.Vars(r)
+	switch vars["action"] {
+	case "search":
+		term, ok := q["term"]
+		if !ok {
+			http.Error(w, "Query 'term' is required", http.StatusBadRequest)
+		}
+
+		max, err := strconv.Atoi(q.Get("limit"))
+		if err != nil {
+			max = 10
+		}
+
+		catalog, err := netflix.Search(term[0], max)
+		if err != nil {
+			msg := fmt.Sprintf("Search failed: %s", err)
+			http.Error(w, msg, http.StatusInternalServerError)
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		fmt.Fprintf(w, "Received: %+v\n", string(catalog))
+		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	fmt.Fprintf(w, "Received: %+v\n", string(catalog))
+	http.Error(w, "No such action", http.StatusNotFound)
 }
 
 func main() {
@@ -34,7 +52,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Handle("/", http.FileServer(http.Dir(staticDir)))
-	r.HandleFunc("/api/v1", defaultApiHandler)
+	r.HandleFunc("/api/1/{action:[a-z]+}", defaultApiHandler)
 
 	p := strconv.Itoa(port)
 	log.Print("Listening on port ", p)

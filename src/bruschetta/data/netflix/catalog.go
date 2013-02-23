@@ -3,6 +3,7 @@ package netflix
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"flag"
 	"github.com/garyburd/go-oauth/oauth"
 	"io"
@@ -57,18 +58,23 @@ var (
 )
 
 func Search(term string, max int) ([]byte, error) {
-	resp, err := client.Get(http.DefaultClient,
+	resp, err := client.Get(
+		http.DefaultClient,
 		nil,
 		"http://api-public.netflix.com/catalog/titles",
 		url.Values{
 			"term":        {term},
 			"max_results": {strconv.Itoa(max)},
 		})
-
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Netflix search failed: %s\n", resp.Status)
+		return nil, errors.New("Netflix search failed")
+	}
 
 	content, err := unmarshal(resp.Body)
 	if err != nil {

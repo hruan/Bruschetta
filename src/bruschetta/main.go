@@ -34,16 +34,14 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 
 		catalog, err := netflix.Search(term[0], max)
 		if err != nil {
-			msg := fmt.Sprintf("Search failed: %s", err)
-			http.Error(w, msg, http.StatusInternalServerError)
+			http.Error(w, "Search is temporarily unavailable.", http.StatusInternalServerError)
 		}
 
 		w.Header().Add("Content-Type", "application/json")
 		fmt.Fprintf(w, "Received: %+v\n", string(catalog))
-		return
+	default:
+		http.Error(w, "No such action", http.StatusNotFound)
 	}
-
-	http.Error(w, "No such action", http.StatusNotFound)
 }
 
 func main() {

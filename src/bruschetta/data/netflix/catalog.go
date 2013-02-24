@@ -14,35 +14,35 @@ import (
 	"strconv"
 )
 
-type catalog struct {
+type Catalog struct {
 	XMLName xml.Name `xml:"catalog_titles" json:"-"`
-	Titles  []title  `xml:"catalog_title" json:"titles"`
+	Titles  []Title  `xml:"catalog_title" json:"titles"`
 }
 
-type title struct {
+type Title struct {
 	Id     string  `xml:"id" json:"id"`
-	Name   name    `xml:"title" json:"name"`
+	Name   Name    `xml:"title" json:"name"`
 	Year   string  `xml:"release_year" json:"year"`
 	Rating float32 `xml:"average_rating" json:"rating"`
-	Boxart boxart  `xml:"box_art" json:"box_art"`
-	Links  []link  `xml:"link" json:"__links"`
+	Boxart Boxart  `xml:"box_art" json:"box_art"`
+	Links  []Link  `xml:"link" json:"__links"`
 }
 
 // TODO: Having Name field in Title map to title>regular,attr should suffice
 // but it's not supported at the moment:
 // http://code.google.com/p/go/issues/detail?id=3688
-type name struct {
+type Name struct {
 	Short   string `xml:"short,attr" json:"short"`
 	Regular string `xml:"regular,attr" json:"regular"`
 }
 
-type boxart struct {
+type Boxart struct {
 	Small  string `xml:"small,attr" json:"small"`
 	Medium string `xml:"medium,attr" json:"medium"`
 	Large  string `xml:"large,attr" json:"large"`
 }
 
-type link struct {
+type Link struct {
 	URL  string `xml:"href,attr" json:"url"`
 	Rel  string `xml:"rel,attr" json:"rel"`
 	Name string `xml:"title,attr" json:"name"`
@@ -90,8 +90,8 @@ func Search(term string, max int) ([]byte, error) {
 }
 
 
-func unmarshal(reader io.Reader) (*catalog, error) {
-	var catalog catalog
+func unmarshal(reader io.Reader) (*Catalog, error) {
+	var catalog Catalog
 	decoder := xml.NewDecoder(reader)
 	if err := decoder.Decode(&catalog); err != nil {
 		log.Printf("unmarshal: xml.Decode failed: %s\n", err)

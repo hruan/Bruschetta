@@ -3,7 +3,6 @@ package main
 import (
 	"bruschetta/data/netflix"
 	"flag"
-	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -38,7 +37,10 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		fmt.Fprintf(w, "Received: %+v\n", string(catalog))
+		_, err = w.Write(catalog)
+		if err != nil {
+			log.Printf("Couldn't write to client: %s\n", err)
+		}
 	default:
 		http.Error(w, "No such action", http.StatusNotFound)
 	}

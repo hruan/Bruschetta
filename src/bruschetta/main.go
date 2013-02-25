@@ -51,10 +51,11 @@ func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 
 	r := mux.NewRouter()
-	r.Handle("/", http.FileServer(http.Dir(staticDir)))
 	r.HandleFunc("/api/1/{action:[a-z]+}", defaultApiHandler)
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(staticDir)))
 
 	p := strconv.Itoa(port)
+	log.Print("Search files from ", staticDir)
 	log.Print("Listening on port ", p)
 	s := &http.Server{
 		Addr:         ":" + p,

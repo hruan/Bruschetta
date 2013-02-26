@@ -3,7 +3,6 @@ package main
 import (
 	"bruschetta/data/netflix"
 	"flag"
-	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -61,7 +60,10 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		fmt.Fprintf(w, "Received: %+v\n", string(catalog))
+		_, err = w.Write(catalog)
+		if err != nil {
+			log.Printf("Couldn't write to client: %s\n", err)
+		}
 	default:
 		http.Error(w, "No such action", http.StatusNotFound)
 	}
@@ -74,10 +76,11 @@ func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 
 	r := mux.NewRouter()
-	r.Handle("/", http.FileServer(http.Dir(staticDir)))
 	r.HandleFunc("/api/1/{action:[a-z]+}", defaultApiHandler)
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(staticDir)))
 
 	p := strconv.Itoa(port)
+	log.Print("Search files from ", staticDir)
 	log.Print("Listening on port ", p)
 	s := &http.Server{
 		Addr:         ":" + p,

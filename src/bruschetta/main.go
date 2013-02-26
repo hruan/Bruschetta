@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -36,9 +37,16 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	switch vars["action"] {
 	case "search":
-		term, ok := q["term"]
+		terms, ok := q["term"]
 		if !ok {
 			http.Error(w, "Query 'term' is required", http.StatusBadRequest)
+			return
+		}
+
+		t := strings.TrimSpace(terms[0])
+		if t == "" {
+			http.Error(w, "term requires an argument", http.StatusBadRequest)
+			return
 		}
 
 		max, err := strconv.Atoi(q.Get("limit"))
@@ -46,9 +54,10 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 			max = 10
 		}
 
-		catalog, err := netflix.Search(term[0], max)
+		catalog, err := netflix.Search(t, max)
 		if err != nil {
 			http.Error(w, "Search is temporarily unavailable.", http.StatusInternalServerError)
+			return
 		}
 
 		w.Header().Add("Content-Type", "application/json")

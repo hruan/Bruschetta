@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"time"
 )
@@ -16,6 +17,19 @@ const port = 8888
 var staticDir string
 
 func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			if e, ok := err.(error); ok {
+				log.Printf("defaultApiHandler panic: %s", e)
+			} else {
+				log.Print("defaultApiHandler panic")
+			}
+
+			log.Printf("Stack trace:\n%s", debug.Stack())
+			http.Error(w, "Search is temporarily unavailable.", http.StatusInternalServerError)
+		}
+	}()
+
 	log.Printf("Received %s %s request from %s", r.Method, r.URL, r.RemoteAddr)
 
 	q := r.URL.Query()

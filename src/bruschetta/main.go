@@ -2,6 +2,8 @@ package main
 
 import (
 	"bruschetta/data/netflix"
+	"bruschetta/data/rt"
+	"bytes"
 	"flag"
 	"github.com/gorilla/mux"
 	"log"
@@ -64,6 +66,44 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Couldn't write to client: %s\n", err)
 		}
+	case "info":
+		name, ok := q["name"]
+		if !ok {
+			http.Error(w, "Query 'name' is required", http.StatusBadRequest)
+			return
+		}
+
+		n := strings.TrimSpace(name[0])
+		if n == "" {
+			http.Error(w, "name requires an argument", http.StatusBadRequest)
+			return
+		}
+
+		year, ok := q["year"]
+		var y string
+		if !ok {
+			y = "any"
+		} else {
+			y = year[0]
+		}
+
+		movies, err := rt.Search(n, y)
+		if err != nil {
+			http.Error(w, "Temporarily unavailable", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		var b bytes.Buffer
+		for _, m := range movies {
+			if _, err := b.Write(m.AsJson()); err != nil {
+				log.Printf("Write to buffer failed: %s\n", err)
+				http.Error(w, "Temporarily unavailable", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		_, err = w.Write(b.Bytes())
 	default:
 		http.Error(w, "No such action", http.StatusNotFound)
 	}

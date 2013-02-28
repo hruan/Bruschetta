@@ -130,7 +130,8 @@ func update(r io.ReadCloser, w chan<- titleIndex) {
 			if s.Name.Local == "catalog_title" {
 				err = decoder.DecodeElement(&title, &s)
 				if err != nil {
-					log.Fatalf("DecodeElement failed: %s\n", err)
+					log.Printf("DecodeElement failed: %s\n", err)
+					continue
 				}
 				if title.movie() {
 					w <- title
@@ -210,7 +211,7 @@ func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 
 	const writers = 8
-	c := make(chan titleIndex, writers*writers)
+	c := make(chan titleIndex, writers*2)
 	for i := 0; i < writers; i++ {
 		go write(c)
 	}

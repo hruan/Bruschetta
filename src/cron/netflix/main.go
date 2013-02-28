@@ -27,10 +27,10 @@ var (
 type (
 	titleIndex struct {
 		Id      string  `xml:"id"`
-		Year    string  `xml:"release_year"`
+		Year    int     `xml:"release_year"`
 		Title   title   `xml:"title"`
 		Updated int     `xml:"updated"`
-		Rating  float64 `xml:"average_rating"`
+		Rating  float32 `xml:"average_rating"`
 		Links   []link  `xml:"link"`
 	}
 
@@ -44,6 +44,46 @@ type (
 		Regular string `xml:"regular,attr"`
 	}
 )
+
+func (t titleIndex) pathSegments() []string {
+	u, err := url.Parse(t.Id)
+	if err != nil {
+		return []string{}
+	}
+
+	return strings.Split(u.Path, "/")
+}
+
+func (t titleIndex) id() int {
+	p := t.pathSegments()
+	if len(p) > 0 {
+		i, err := strconv.Atoi(p[len(p)-1])
+		if err != nil {
+			panic("Couldn't find id")
+		}
+		return i
+	}
+	panic("Title missing URL path")
+}
+
+func (t titleIndex) movie() bool {
+	p := t.pathSegments()
+	l := len(p)
+	if l > 0 {
+		return p[l-2] == "movies"
+	}
+	panic("Title missing URL path")
+}
+
+func (t titleIndex) playURL() string {
+	for _, t := range t.Links {
+		if t.Rel == "alternate" {
+			return t.URL
+		}
+	}
+
+	return ""
+}
 
 func fetchFromNetflix() io.ReadCloser {
 	req, err := http.NewRequest(
@@ -92,7 +132,9 @@ func update(r io.ReadCloser, w chan<- titleIndex) {
 				if err != nil {
 					log.Fatalf("DecodeElement failed: %s\n", err)
 				}
-				w <- title
+				if title.movie() {
+					w <- title
+				}
 			}
 		}
 	}
@@ -127,34 +169,11 @@ func write(c <-chan titleIndex) {
 			return
 		}
 
-		_, err := st.Exec(findId(&t), t.Year, t.Title.Regular, t.Updated, t.Rating, playURL(&t))
+		_, err := st.Exec(t.id(), t.Year, t.Title.Regular, t.Updated, t.Rating, t.playURL())
 		if err != nil {
 			log.Fatalf("Exec failed: %s\n", err)
 		}
 	}
-}
-
-func playURL(t *titleIndex) string {
-	for _, l := range t.Links {
-		if l.Rel == "http://schemas.netflix.com/catalog/title/ref.tiny" {
-			return l.URL
-		}
-	}
-	panic("Found title without a play URL")
-}
-
-func findId(t *titleIndex) int {
-	u, err := url.Parse(t.Id)
-	if err != nil {
-		panic("Unknown id type found")
-	}
-
-	p := strings.Split(u.Path, "/")
-	i, err := strconv.Atoi(p[len(p)-1])
-	if err != nil {
-		panic("Couldn't find id")
-	}
-	return i
 }
 
 func buildConnStr() string {
@@ -190,11 +209,12 @@ func main() {
 
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 
-	const writers = 4
-	c := make(chan titleIndex, writers*2)
+	const writers = 8
+	c := make(chan titleIndex, writers*writers)
 	for i := 0; i < writers; i++ {
 		go write(c)
 	}
+	defer close(c)
 
 	if *fetch {
 		log.Println("Fetching catalog from Netflix")

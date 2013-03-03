@@ -38,7 +38,7 @@ func Search(title string, year int) (titles []Title, err error) {
 	var rows *sql.Rows
 	// TODO: Escape NUL, \, ', ", %, _, [, and ]
 	if year >= 0 {
-		query := "SELECT id, title, year, play_url, rating FROM titles WHERE title LIKE '%$1%' AND year = $2"
+		query := `SELECT id, title, year, play_url, rating FROM titles WHERE title ILIKE $1 and year = $2`
 		rows, err = db.Query(query, title, year)
 	} else {
 		s := `%` + title + `%`

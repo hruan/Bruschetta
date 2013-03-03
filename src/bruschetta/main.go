@@ -104,6 +104,35 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "No such action", http.StatusNotFound)
 	}
+} */
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	q := strings.TrimSpace(query.Get("q"))
+	if q == "" {
+		http.Error(w, "Query q can't be empty", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Search request: %s\n", q)
+
+	results, err := netflix.Search(q, -1)
+	if err != nil {
+		http.Error(w, "Search is temporarily unavailable", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	j, err := json.Marshal(results)
+	if err != nil {
+		log.Printf("Failed to marshal search results as JSON: %s\n", err)
+		http.Error(w, "Search is temporarily unavailable", http.StatusInternalServerError)
+		return
+	}
+	w.Write(j)
+}
+
+func reviewHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Review handler hit")
 }
 
 func main() {
@@ -113,11 +142,15 @@ func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/api/1/{action:[a-z]+}", defaultApiHandler)
+	api := r.PathPrefix("/api/1/").Subrouter()
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(staticDir)))
 
+	// API resources; paths are relative to "/api/1/", though it must start with "/"
+	api.Path("/search").Methods("GET").Queries("q", "").HandlerFunc(searchHandler)
+	api.Path("/reviews/{year:^[\\d]{4}$}/{title:([:word:]|[- ])+}").Methods("GET").HandlerFunc(reviewHandler)
+
 	p := strconv.Itoa(port)
-	log.Print("Search files from ", staticDir)
+	log.Print("Serving static files from ", staticDir)
 	log.Print("Listening on port ", p)
 	s := &http.Server{
 		Addr:         ":" + p,

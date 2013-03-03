@@ -121,12 +121,15 @@ func fetchFromFile() io.ReadCloser {
 func update(r io.ReadCloser, w chan<- titleIndex) {
 	defer r.Close()
 
-	var title titleIndex
 	decoder := xml.NewDecoder(r)
 	for t, err := decoder.Token(); err == nil; t, err = decoder.Token() {
 		switch s := t.(type) {
 		case xml.StartElement:
 			if s.Name.Local == "catalog_title" {
+				// Unmarshal to a new var each iteration as it append slices
+				// giving us a slice with _all_ links from all decoded titles
+				// http://golang.org/pkg/encoding/xml/#Unmarshal
+				var title titleIndex
 				err = decoder.DecodeElement(&title, &s)
 				if err != nil {
 					log.Printf("DecodeElement failed: %s\n", err)

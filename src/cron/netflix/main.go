@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"bruschetta/db"
 	"encoding/xml"
 	"flag"
 	_ "github.com/bmizerany/pq"
@@ -21,7 +21,6 @@ var (
 		ResourceOwnerAuthorizationURI: "http://api-user.netflix.com/oauth/login",
 		TokenRequestURI:               "http://api-public.netflix.com/oauth/access_token",
 	}
-	dbhost, dbport, dbname, dbuser, dbpass string
 )
 
 type (
@@ -151,9 +150,9 @@ func write(c <-chan titleIndex) {
 		}
 	}()
 
-	db, err := sql.Open("postgres", buildConnStr())
+	db, err := db.Open()
 	if err != nil {
-		log.Fatalf("Couldn't open connection to database: %s\n", err)
+		log.Fatalf("Couldn't open DB connection: %s\n", err)
 	}
 	defer db.Close()
 
@@ -177,35 +176,8 @@ func write(c <-chan titleIndex) {
 	}
 }
 
-func buildConnStr() string {
-	connStr := "dbname=" + dbname
-
-	if dbhost != "" {
-		connStr += " host=" + dbhost
-	}
-
-	if dbport != "" {
-		connStr += " port=" + dbport
-	}
-
-	if dbuser != "" {
-		connStr += " user=" + dbuser
-	}
-
-	if dbpass != "" {
-		connStr += " password=" + dbpass
-	}
-
-	return connStr
-}
-
 func main() {
 	fetch := flag.Bool("fetch", false, "fetch=<true | false>")
-	flag.StringVar(&dbuser, "dbuser", "", "username for database")
-	flag.StringVar(&dbpass, "dbpass", "", "password for database")
-	flag.StringVar(&dbname, "dbname", "bruschetta", "name of the database")
-	flag.StringVar(&dbhost, "dbhost", "", "hostname of database")
-	flag.StringVar(&dbport, "dbport", "5432", "port number of database")
 	flag.Parse()
 
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)

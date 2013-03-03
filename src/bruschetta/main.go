@@ -4,6 +4,7 @@ import (
 	"bruschetta/data/netflix"
 	"bruschetta/data/rt"
 	"bytes"
+	"encoding/json"
 	"flag"
 	"github.com/gorilla/mux"
 	"log"
@@ -50,22 +51,18 @@ func defaultApiHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		max, err := strconv.Atoi(q.Get("limit"))
+		catalog, err := netflix.Search(t, -1)
 		if err != nil {
-			max = 10
-		}
-
-		catalog, err := netflix.Search(t, max)
-		if err != nil {
-			http.Error(w, "Search is temporarily unavailable.", http.StatusInternalServerError)
-			return
+			http.Error(w, "Search is temporarily unavailable", http.StatusInternalServerError)
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		_, err = w.Write(catalog)
+		j, err := json.Marshal(catalog)
 		if err != nil {
-			log.Printf("Couldn't write to client: %s\n", err)
+			log.Printf("JSON marshaling failed: %s\n", err)
+			http.Error(w, "Search is temporarily unavailable", http.StatusInternalServerError)
 		}
+		w.Write(j)
 	case "info":
 		name, ok := q["name"]
 		if !ok {

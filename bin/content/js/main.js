@@ -6,7 +6,7 @@
   self.search = function() {
     if (searchTerm === undefined || searchTerm === "") return;
     $.ajax({
-      url: 'api/1/search?term=' + self.searchTerm(),
+      url: 'api/1/search?q=' + self.searchTerm(),
       success: function(result) {
         ko.mapping.fromJS(result, self.titles);
       },

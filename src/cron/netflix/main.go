@@ -44,7 +44,7 @@ type (
 	}
 )
 
-func (t titleIndex) pathSegments() []string {
+func (t *titleIndex) pathSegments() []string {
 	u, err := url.Parse(t.Id)
 	if err != nil {
 		return []string{}
@@ -53,7 +53,7 @@ func (t titleIndex) pathSegments() []string {
 	return strings.Split(u.Path, "/")
 }
 
-func (t titleIndex) id() int {
+func (t *titleIndex) id() int {
 	p := t.pathSegments()
 	if len(p) > 0 {
 		i, err := strconv.Atoi(p[len(p)-1])
@@ -65,7 +65,7 @@ func (t titleIndex) id() int {
 	panic("Title missing URL path")
 }
 
-func (t titleIndex) movie() bool {
+func (t *titleIndex) movie() bool {
 	p := t.pathSegments()
 	l := len(p)
 	if l > 0 {
@@ -74,7 +74,7 @@ func (t titleIndex) movie() bool {
 	panic("Title missing URL path")
 }
 
-func (t titleIndex) playURL() string {
+func (t *titleIndex) playURL() string {
 	for _, t := range t.Links {
 		if t.Rel == "alternate" {
 			return t.URL

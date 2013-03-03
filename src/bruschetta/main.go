@@ -132,7 +132,34 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func reviewHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Review handler hit")
+	const errStr = "RT review summary is unavailable."
+	vars := mux.Vars(r)
+
+	year, yok := vars["year"]
+	title, tok := vars["title"]
+	if !(yok && tok) {
+		http.Error(w, "year or title missing", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Looking for reviews for %s (%s)\n", title, year)
+	movies, err := rt.Search(title, year)
+	if err != nil {
+		http.Error(w, errStr, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	var b bytes.Buffer
+	for _, m := range movies {
+		if _, err := b.Write(m.AsJson()); err != nil {
+			log.Printf("Write to buffer failed: %s\n", err)
+			http.Error(w, errStr, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	_, err = w.Write(b.Bytes())
 }
 
 func main() {

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -66,7 +67,8 @@ func (m *Movie) match(title, year string) bool {
 }
 
 func (m *Movie) matchTitle(title string) bool {
-	return hyphenify(m.Title) == title
+	t := hyphenify(m.Title)
+	return t == title
 }
 
 func (m *Movie) matchYear(year string) bool {
@@ -83,20 +85,13 @@ func (m *Movie) matchYear(year string) bool {
 
 // Remove all non-alphanumerical characters and replace whitespaces with "-"
 func hyphenify(s string) string {
-	fn := func(r rune) rune {
-		if r != ' ' && !((r >= '0' && r <= '9') || (r >= 'A' && r <= 'Z')) {
-			return '_'
-		}
-		return r
-	}
+	collapse := regexp.MustCompile(`[^\w- ]+`)
+	hyphen := regexp.MustCompile(`[\s-]+`)
 
-	escaped := strings.Map(fn, strings.ToUpper(s))
-	cleaned := strings.Replace(escaped, "_", "", -1)
-	f := strings.Fields(cleaned)
-	str := strings.Join(f, "-")
-
-	// log.Println("Hyphenified:", str)
-	return str
+	collapsed := collapse.ReplaceAllString(strings.ToUpper(s), "")
+	hyphened := hyphen.ReplaceAllString(collapsed, "-")
+	//log.Println("Hyphenified: ", hyphened)
+	return hyphened
 }
 
 func Search(title, year string) (*Movie, error) {
@@ -110,7 +105,7 @@ func Search(title, year string) (*Movie, error) {
 
 	v := url.Values{}
 	v.Set("limit", "10")
-	for _, w := range strings.Fields(title) {
+	for _, w := range strings.Split(title, "-") {
 		v.Add("q", w)
 	}
 	req.URL.RawQuery = v.Encode()

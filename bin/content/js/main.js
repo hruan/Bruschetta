@@ -4,16 +4,31 @@
   self.searchTerm = ko.observable();
   self.titles = ko.mapping.fromJS([]);
   self.search = function() {
-    if (searchTerm === undefined || searchTerm === "") return;
+    if (searchTerm === undefined || searchTerm === '') return;
     $.ajax({
       url: 'api/1/search?q=' + self.searchTerm(),
       success: function(result) {
         ko.mapping.fromJS(result, self.titles);
+        result.forEach(function(elem) {
+          var url = 'api/1/reviews/' + elem.year + '/' + hyphenify(elem.title);
+          $.getJSON(url, function(data) {
+            $("#" + elem.id).html("Critics score: " + data.ratings.critics_score);
+          })
+          .error(function() {
+            $("#" + elem.id).html("No reviews!");
+          });
+        });
       },
       error: function(request, textStatus, errorThrown) {
         alert('search failed:', textStatus);
       }
     });
+  }
+
+  function hyphenify(str) {
+    return str.replace(/[^\w- ]+/g, '')
+      .replace(/[\s-]+/g, '-')
+      .toLowerCase();
   }
 
   ko.applyBindings(this);

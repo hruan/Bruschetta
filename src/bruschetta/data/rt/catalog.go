@@ -133,12 +133,13 @@ func Search(title, year string) (*Movie, error) {
 		return nil, err
 	}
 
-	return filter(result.Movies, hyphenify(title), year)
+	return filter(result.Movies, title, year)
 }
 
 func filter(movies []Movie, title, year string) (match *Movie, err error) {
+	t := hyphenify(title)
 	for _, m := range movies {
-		if m.match(title, year) {
+		if m.match(t, year) {
 			match = new(Movie)
 			*match = m
 			return

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type (
@@ -40,7 +41,12 @@ type (
 	}
 )
 
-var apiKey rtCredentials
+const rateLimit = 9
+
+var (
+	apiKey rtCredentials
+	bucket chan time.Time
+)
 
 // Get JSON-representation of Movie m
 func (m *Movie) AsJson() []byte {
@@ -111,6 +117,8 @@ func Search(title, year string) (*Movie, error) {
 
 	appendKey(req.URL)
 
+	// Wait for a token to become available before sending the request
+	<-bucket
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("Client request failed: %s\n")
@@ -158,4 +166,14 @@ func init() {
 	if err = json.Unmarshal(c, &apiKey); err != nil {
 		log.Fatalf("rt.json unmarshaling failed: %s\n", err)
 	}
+
+	// Rate limit RT-requests using a token bucket
+	bucket = make(chan time.Time, rateLimit)
+	go func() {
+		t := time.Tick(time.Second / rateLimit)
+		for {
+			token := <-t
+			bucket <- token
+		}
+	}()
 }

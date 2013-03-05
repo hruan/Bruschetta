@@ -106,43 +106,6 @@ func hyphenify(s string) string {
 	return hyphened
 }
 
-/* func Search(title, year string) (*Movie, error) {
-	const searchURL = "http://api.rottentomatoes.com/api/public/v1.0/movies.json"
-
-	req, err := http.NewRequest("GET", searchURL, nil)
-	if err != nil {
-		log.Printf("Failed to create request: %s\n", err)
-		return nil, err
-	}
-
-	v := url.Values{}
-	v.Set("limit", "10")
-	for _, w := range strings.Split(title, "-") {
-		v.Add("q", w)
-	}
-	req.URL.RawQuery = v.Encode()
-
-	appendKey(req.URL)
-
-	// Wait for a token to become available before sending the request
-	<-bucket
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Printf("Client request failed: %s\n")
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var result searchResponse
-	decoder := json.NewDecoder(resp.Body)
-	if err = decoder.Decode(&result); err != nil {
-		log.Printf("JSON unmarshaling failed: %s\n", err)
-		return nil, err
-	}
-
-	return filter(result.Movies, title, year)
-} */
-
 func Search(id string) (*Movie, error) {
 	t, err := netflix.Get(id)
 	if err != nil {

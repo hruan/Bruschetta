@@ -1,15 +1,17 @@
 package rt
 
 import (
+	"bruschetta/data/netflix"
 	"bytes"
 	"encoding/json"
-	"errors"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
+	"strconv"
 	"time"
 )
 
@@ -37,6 +39,10 @@ type (
 		Audience    int    `json:"audience_score"`
 	}
 
+	SearchError struct {
+		id string
+	}
+
 	rtCredentials struct {
 		ApiKey string
 	}
@@ -48,6 +54,10 @@ var (
 	apiKey rtCredentials
 	bucket chan time.Time
 )
+
+func (e *SearchError) Error() string {
+	return "No match for " + e.id + " found"
+}
 
 // Get JSON-representation of Movie m
 func (m *Movie) AsJson() []byte {
@@ -68,6 +78,7 @@ func (m *Movie) match(title, year string) bool {
 
 func (m *Movie) matchTitle(title string) bool {
 	t := hyphenify(m.Title)
+	//log.Printf("Comparing %s with %s\n", t, title)
 	return t == title
 }
 
@@ -80,6 +91,7 @@ func (m *Movie) matchYear(year string) bool {
 	}
 
 	_year := strings.Split(rdate, "-")[0]
+	//log.Printf("Comparing %s with %s\n", _year, year)
 	return year == _year
 }
 
@@ -94,7 +106,7 @@ func hyphenify(s string) string {
 	return hyphened
 }
 
-func Search(title, year string) (*Movie, error) {
+/* func Search(title, year string) (*Movie, error) {
 	const searchURL = "http://api.rottentomatoes.com/api/public/v1.0/movies.json"
 
 	req, err := http.NewRequest("GET", searchURL, nil)
@@ -129,19 +141,74 @@ func Search(title, year string) (*Movie, error) {
 	}
 
 	return filter(result.Movies, title, year)
+} */
+
+func Search(id string) (*Movie, error) {
+	t, err := netflix.Get(id)
+	if err != nil {
+		log.Printf("ID not found: %s\n", err)
+		return nil, &SearchError{id: id}
+	}
+
+	v := url.Values{}
+	v.Set("limit", "10")
+	for _, w := range strings.Fields(t.Title) {
+		v.Add("q", w)
+	}
+
+	resp, err := rtSearch(v)
+	if err != nil {
+		log.Printf("RT search failed: %s\n", err)
+		return nil, err
+	}
+	defer resp.Close()
+
+	var result searchResponse
+	decoder := json.NewDecoder(resp)
+	if err = decoder.Decode(&result); err != nil {
+		log.Printf("JSON unmarshaling failed: %s\n", err)
+		return nil, err
+	}
+
+	return filter(result.Movies, t)
 }
 
-func filter(movies []Movie, title, year string) (match *Movie, err error) {
-	t := hyphenify(title)
+func rtSearch(v url.Values) (io.ReadCloser, error) {
+	const searchURL = "http://api.rottentomatoes.com/api/public/v1.0/movies.json"
+
+	req, err := http.NewRequest("GET", searchURL, nil)
+	if err != nil {
+		log.Printf("Failed to create request: %s\n", err)
+		return nil, err
+	}
+
+	req.URL.RawQuery = v.Encode()
+	appendKey(req.URL)
+
+	// Wait for a token to become available before sending the request
+	<-bucket
+	log.Printf("Sending request: %+v\n", req.URL)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Client request failed: %s\n")
+		return nil, err
+	}
+
+	return resp.Body, nil
+}
+
+func filter(movies []Movie, t *netflix.Title) (match *Movie, err error) {
+	ht := hyphenify(t.Title)
+	year := strconv.Itoa(t.Year)
 	for _, m := range movies {
-		if m.match(t, year) {
+		if m.match(ht, year) {
 			match = new(Movie)
 			*match = m
 			return
 		}
 	}
 
-	return nil, errors.New("Not found")
+	return nil, &SearchError{id: strconv.Itoa(t.Id)}
 }
 
 // Appends RottenTomatoes API key to an URL

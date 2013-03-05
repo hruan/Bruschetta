@@ -10,7 +10,8 @@
       success: function(result) {
         ko.mapping.fromJS(result, self.titles);
         result.forEach(function(elem) {
-          var url = 'api/1/reviews/' + elem.year + '/' + hyphenify(elem.title);
+          // var url = 'api/1/reviews/' + elem.year + '/' + hyphenify(elem.title);
+          var url = 'api/1/reviews/' + elem.id;
           $.getJSON(url, function(data) {
             $("#" + elem.id).html("Critics score: " + data.ratings.critics_score);
           })

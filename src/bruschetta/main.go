@@ -46,15 +46,18 @@ func reviewHandler(w http.ResponseWriter, r *http.Request) {
 	const errStr = "RT review summary is unavailable."
 	vars := mux.Vars(r)
 
-	year, yok := vars["year"]
-	title, tok := vars["title"]
-	if !(yok && tok) {
-		http.Error(w, "year or title missing", http.StatusBadRequest)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "id missing", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("Looking for reviews for %s (%s)\n", title, year)
-	m, err := rt.Search(title, year)
+	log.Printf("Looking for reviews for movie id %s\n" , id)
+	m, err := rt.Search(id)
+	if serr, ok := err.(*rt.SearchError); ok {
+		http.Error(w, serr.Error(), http.StatusNotFound)
+		return
+	}
 	if err != nil {
 		log.Printf("RT search failed: %s\n", err)
 		http.Error(w, errStr, http.StatusInternalServerError)
@@ -77,7 +80,7 @@ func main() {
 
 	// API resources; paths are relative to "/api/1/", though it must start with "/"
 	api.Path("/search").Methods("GET").Queries("q", "").HandlerFunc(searchHandler)
-	api.Path("/reviews/{year:\\d{4}}/{title:(\\w|[- ])+}").Methods("GET").HandlerFunc(reviewHandler)
+	api.Path("/reviews/{id:\\d+}").Methods("GET").HandlerFunc(reviewHandler)
 
 	p := strconv.Itoa(port)
 	log.Print("Serving static files from ", staticDir)

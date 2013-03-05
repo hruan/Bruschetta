@@ -6,6 +6,7 @@ import (
 	_ "github.com/bmizerany/pq"
 	"database/sql"
 	"log"
+	"strings"
 )
 
 type (
@@ -16,7 +17,17 @@ type (
 		URL	string	`json:"url"`
 		Rating	float32	`json:"rating"`
 	}
+
+	SearchError struct {
+		msg string
+	}
 )
+
+func (e *SearchError) Error() string {
+	return e.msg
+}
+
+var conn *sql.DB
 
 func (t *Title) AsJson() []byte {
 	json, err := json.Marshal(t)
@@ -29,20 +40,14 @@ func (t *Title) AsJson() []byte {
 }
 
 func Search(title string, year int) (titles []Title, err error) {
-	db, err := db.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
 	var rows *sql.Rows
 	// TODO: Escape NUL, \, ', ", %, _, [, and ]
 	if year >= 0 {
 		query := `SELECT id, title, year, play_url, rating FROM titles WHERE title ILIKE $1 and year = $2`
-		rows, err = db.Query(query, title, year)
+		rows, err = conn.Query(query, title, year)
 	} else {
 		s := `%` + title + `%`
-		rows, err = db.Query(`SELECT id, title, year, play_url, rating FROM titles WHERE title ILIKE $1`, s)
+		rows, err = conn.Query(`SELECT id, title, year, play_url, rating FROM titles WHERE title ILIKE $1`, s)
 	}
 
 	if err != nil {
@@ -68,3 +73,40 @@ func Search(title string, year int) (titles []Title, err error) {
 	return
 }
 
+func Get(id string) (t *Title, err error) {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return nil, &SearchError{msg: "Id can't be empty"}
+	}
+
+	t = new(Title)
+	var rows *sql.Rows
+	rows, err = conn.Query(`SELECT id, title, year, play_url, rating FROM titles WHERE id = $1`, id)
+	if err != nil {
+		log.Printf("DB query failed: %s\n", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err = rows.Scan(&t.Id, &t.Title, &t.Year, &t.URL, &t.Rating)
+		if err != nil {
+			log.Printf("Scan failed: %s\n", err)
+			return
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Printf("rows iteration failed: %s\n", err)
+	}
+
+	return t, nil
+}
+
+func init() {
+	var err error
+	conn, err = db.Open()
+	if err != nil {
+		log.Fatalf("Couldn't open DB connection: %s\n", err)
+	}
+}

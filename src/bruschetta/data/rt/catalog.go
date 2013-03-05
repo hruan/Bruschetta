@@ -150,13 +150,7 @@ func Search(id string) (*Movie, error) {
 		return nil, &SearchError{id: id}
 	}
 
-	v := url.Values{}
-	v.Set("limit", "10")
-	for _, w := range strings.Fields(t.Title) {
-		v.Add("q", w)
-	}
-
-	resp, err := rtSearch(v)
+	resp, err := rtSearch(t)
 	if err != nil {
 		log.Printf("RT search failed: %s\n", err)
 		return nil, err
@@ -173,7 +167,7 @@ func Search(id string) (*Movie, error) {
 	return filter(result.Movies, t)
 }
 
-func rtSearch(v url.Values) (io.ReadCloser, error) {
+func rtSearch(t *netflix.Title) (io.ReadCloser, error) {
 	const searchURL = "http://api.rottentomatoes.com/api/public/v1.0/movies.json"
 
 	req, err := http.NewRequest("GET", searchURL, nil)
@@ -182,12 +176,15 @@ func rtSearch(v url.Values) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	req.URL.RawQuery = v.Encode()
 	appendKey(req.URL)
+	v := url.Values{}
+	v.Set("limit", "10")
+	req.URL.RawQuery += "&" + v.Encode()
+	req.URL.RawQuery += "&q=" + escapeQuery(t.Title)
 
 	// Wait for a token to become available before sending the request
 	<-bucket
-	log.Printf("Sending request: %+v\n", req.URL)
+	log.Printf("Sending request: %s\n", req.URL)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("Client request failed: %s\n")
@@ -195,6 +192,20 @@ func rtSearch(v url.Values) (io.ReadCloser, error) {
 	}
 
 	return resp.Body, nil
+}
+
+func escapeQuery(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return ""
+	}
+
+	alphanum := regexp.MustCompile(`[^\w-.~]+`)
+	words := strings.Fields(s)
+	var filtered []string
+	for _, w := range words {
+		filtered = append(filtered, alphanum.ReplaceAllString(w, ""))
+	}
+	return strings.Join(filtered, "+")
 }
 
 func filter(movies []Movie, t *netflix.Title) (match *Movie, err error) {

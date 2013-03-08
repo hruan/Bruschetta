@@ -1,38 +1,37 @@
 (function AppData() {
-  var self = this;
+    var self = this;
 
-  self.searchTerm = ko.observable();
-  self.titles = ko.mapping.fromJS([]);
-  self.search = function() {
-    if (searchTerm === undefined || searchTerm === '') return;
-    $.ajax({
-      url: 'api/1/search?q=' + self.searchTerm(),
-      success: function(result) {
-        ko.mapping.fromJS(result, self.titles);
-        result.forEach(function(elem) {
-          // var url = 'api/1/reviews/' + elem.year + '/' + hyphenify(elem.title);
-          var url = 'api/1/reviews/' + elem.id;
-          $.getJSON(url, function(data) {
-            $("#" + elem.id).html("Critics score: " + data.ratings.critics_score);
-          })
-          .error(function() {
-            $("#" + elem.id).html("No reviews!");
-          });
+    self.searchTerm = ko.observable();
+
+    self.titles = ko.mapping.fromJS([]);
+
+    self.search = function() {
+        if (searchTerm === undefined || searchTerm === '') return;
+        $.ajax({
+            url: 'api/1/search?q=' + self.searchTerm(),
+            success: searchCallback,
+            error: function(request, textStatus, errorThrown) {
+                alert('search failed:', textStatus);
+            }
         });
-      },
-      error: function(request, textStatus, errorThrown) {
-        alert('search failed:', textStatus);
-      }
-    });
-  }
+    };
 
-  function hyphenify(str) {
-    return str.replace(/[^\w- ]+/g, '')
-      .replace(/[\s-]+/g, '-')
-      .toLowerCase();
-  }
+    self.searchCallback = function(result) {
+        ko.mapping.fromJS(result, self.titles);
+        result.forEach(getReviews);
+    };
 
-  ko.applyBindings(this);
+    self.getReviews = function(elem) {
+        var url = 'api/1/reviews/' + elem.id;
+        $.getJSON(url, function(data) {
+            $("#" + elem.id).html("Critics score: " + data.ratings.critics_score);
+        })
+        .error(function() {
+            $("#" + elem.id).html("No reviews!");
+        });
+    };
+
+    ko.applyBindings(this);
 })();
 
 /*(function () {
@@ -50,4 +49,4 @@
     require(['bootstrap'], function (b) { b.boot(); });
   }
 })();*/
-// vim: set ts=2 sw=2 sts=2 et:
+// vim: set ts=4 sw=4 sts=4 et:

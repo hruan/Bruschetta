@@ -2,11 +2,12 @@ package main
 
 import (
 	"bruschetta/db"
+	"encoding/json"
 	"encoding/xml"
-	"flag"
 	_ "github.com/bmizerany/pq"
 	"github.com/garyburd/go-oauth/oauth"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -23,6 +24,11 @@ var (
 	}
 )
 
+const (
+	credPath = "netflix_credentials.json"
+	dbPath = "db/netflix.db"
+)
+
 type (
 	titleIndex struct {
 		Id      string  `xml:"id"`
@@ -34,13 +40,19 @@ type (
 	}
 
 	link struct {
-		Rel string `xml:"rel,attr"`
-		URL string `xml:"href,attr"`
+		Rel      string  `xml:"rel,attr"`
+		URL      string  `xml:"href,attr"`
+		Synopsis string  `xml:"synopsis"`
+		BoxArt   *boxArt `xml:"box_art"`
 	}
 
 	title struct {
 		Short   string `xml:"short,attr"`
 		Regular string `xml:"regular,attr"`
+	}
+
+	boxArt struct {
+		Links []link `xml:"link"`
 	}
 )
 
@@ -75,9 +87,35 @@ func (t *titleIndex) movie() bool {
 }
 
 func (t *titleIndex) playURL() string {
-	for _, t := range t.Links {
-		if t.Rel == "alternate" {
-			return t.URL
+	for _, l := range t.Links {
+		if l.Rel == "alternate" {
+			return l.URL
+		}
+	}
+
+	return ""
+}
+
+func (t *titleIndex) synopsis() string {
+	for _, l := range t.Links {
+		if l.Rel == `http://schemas.netflix.com/catalog/titles/synopsis` {
+			return l.Synopsis
+		}
+	}
+
+	return ""
+}
+
+func (t *titleIndex) boxArt() string {
+	for _, l := range t.Links {
+		if l.BoxArt == nil {
+			return ""
+		}
+
+		for _, al := range l.BoxArt.Links {
+			if al.Rel == `http://schemas.netflix.com/catalog/titles/box_art/197pix_w` {
+				return al.URL
+			}
 		}
 	}
 
@@ -110,7 +148,7 @@ func fetchFromNetflix() io.ReadCloser {
 }
 
 func fetchFromFile() io.ReadCloser {
-	f, err := os.Open("db/netflix_catalog.bin")
+	f, err := os.Open(dbPath)
 	if err != nil {
 		log.Fatalf("Couldn't open Netflix catalog: %s\n", err)
 	}
@@ -144,7 +182,7 @@ func update(r io.ReadCloser, w chan<- titleIndex) {
 }
 
 func write(c <-chan titleIndex) {
-	const stmt = `INSERT INTO titles (id, year, title, updated, rating, play_url) VALUES ($1, $2, $3, $4, $5, $6)`
+	const stmt = `INSERT INTO titles (id, year, title, updated, rating, play_url, synopsis, box_art) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	const batchSize = 10
 
 	defer func() {
@@ -172,27 +210,53 @@ func write(c <-chan titleIndex) {
 			return
 		}
 
-		_, err := st.Exec(t.id(), t.Year, t.Title.Regular, t.Updated, t.Rating, t.playURL())
+		_, err := st.Exec(t.id(), t.Year, t.Title.Regular, t.Updated, t.Rating, t.playURL(), t.synopsis(), t.boxArt())
 		if err != nil {
 			log.Fatalf("Exec failed: %s\n", err)
 		}
 	}
 }
 
-func main() {
-	fetch := flag.Bool("fetch", false, "fetch=<true | false>")
-	flag.Parse()
+func readCredentials(fetch bool) bool {
+	if !fetch {
+		return true
+	}
 
+	b, err := ioutil.ReadFile(credPath)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	err = json.Unmarshal(b, &client.Credentials)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return true
+}
+
+func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 
-	const writers = 8
+	fetch := false
+	if env := os.ExpandEnv("$CNFETCH"); env != "" {
+		fetch = (env != "false" && env != "0")
+	}
+
+	if ok := readCredentials(fetch); !ok {
+		log.Fatalln("Couldn't read Netflix credentials")
+	}
+
+	const writers = 4
 	c := make(chan titleIndex, writers*2)
 	for i := 0; i < writers; i++ {
 		go write(c)
 	}
 	defer close(c)
 
-	if *fetch {
+	if fetch {
 		log.Println("Fetching catalog from Netflix")
 		update(fetchFromNetflix(), c)
 	} else {

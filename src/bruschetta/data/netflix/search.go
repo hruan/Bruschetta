@@ -14,6 +14,8 @@ type (
 		Id	int	`json:"id"`
 		Title	string	`json:"title"`
 		Year	int	`json:"year"`
+		Synopsis string	`json:"synopsis"`
+		BoxArt string	`json:"box_art"`
 		URL	string	`json:"url"`
 		Rating	float32	`json:"rating"`
 	}
@@ -39,16 +41,11 @@ func (t *Title) AsJson() []byte {
 	return json
 }
 
-func Search(title string, year int) (titles []Title, err error) {
+func Search(title string) (titles []Title, err error) {
 	var rows *sql.Rows
 	// TODO: Escape NUL, \, ', ", %, _, [, and ]
-	if year >= 0 {
-		query := `SELECT id, title, year, play_url, rating FROM titles WHERE title ILIKE $1 and year = $2`
-		rows, err = conn.Query(query, title, year)
-	} else {
-		s := `%` + title + `%`
-		rows, err = conn.Query(`SELECT id, title, year, play_url, rating FROM titles WHERE title ILIKE $1`, s)
-	}
+	s := `%` + title + `%`
+	rows, err = conn.Query(`SELECT id, title, year, play_url, rating, box_art, synopsis FROM titles WHERE title ILIKE $1`, s)
 
 	if err != nil {
 		log.Printf("Query failed: %s\n", err)
@@ -58,7 +55,7 @@ func Search(title string, year int) (titles []Title, err error) {
 
 	for rows.Next() {
 		var title Title
-		err := rows.Scan(&title.Id, &title.Title, &title.Year, &title.URL, &title.Rating)
+		err := rows.Scan(&title.Id, &title.Title, &title.Year, &title.URL, &title.Rating, &title.BoxArt, &title.Synopsis)
 		if err != nil {
 			log.Printf("Scan failed: %s\n", err)
 			continue

@@ -26,7 +26,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Search request: %s\n", q)
 
-	results, err := netflix.Search(q, -1)
+	results, err := netflix.Search(q)
 	if err != nil {
 		http.Error(w, "Search is temporarily unavailable", http.StatusInternalServerError)
 		return

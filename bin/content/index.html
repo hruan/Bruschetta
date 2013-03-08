@@ -1,24 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bruschetta</title>
+  <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+  <link href="css/main.css" rel="stylesheet" media="screen">
 </head>
 
 <body>
-  <input id="search" type="text" name="search" data-bind="value: searchTerm">
-  <button data-bind="click: search">Search</button>
-  <div id="#movies">
-    <ul data-bind="foreach: titles">
-      <li><a data-bind="text: title, attr: { href: url }"></a> (<span data-bind="text:
-          year"> </span>) <span data-bind="attr: { id: id }"> </span></li>
-    </ul>
+  <div class="container">
+    <h1>Bruschetta</h1>
+
+    <div class="row">
+      <div class="offset3">
+        <form class="span6 form-search">
+          <input class="span4" placeholder="search for movies by title" id="search" type="text" name="search" data-bind="value: searchTerm">
+          <button class="btn" data-bind="click: search">Search</button>
+        </form>
+      </div>
+    </div>
+    <div id="movies">
+      <ul class="movie" data-bind="foreach: titles">
+        <li>
+          <!-- <img data-bind="attr: { src: box_art }" /> -->
+          <a data-bind="text: title, attr: { href: url }"></a>
+          <p class="release-year" data-bind="text: year"></p>
+          <p class="review" data-bind="attr: { id: id }"></p>
+        </li>
+      </ul>
+    </div>
   </div>
 
   <script src="js/lib/jquery-1.9.1.min.js" type="text/javascript"></script>
   <script src="js/lib/knockout-2.2.1.js" type="text/javascript"></script>
   <script src="js/lib/knockout.mapping-latest.js" type="text/javascript"></script>
-  <script src="js/lib/require.js" type="text/javascript"></script>
+  <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+  <!-- <script src="js/lib/require.js" type="text/javascript"></script> -->
   <script src="js/main.js" type="text/javascript"></script>
 </body>
 </html>

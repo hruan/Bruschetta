@@ -10,7 +10,7 @@
   <button data-bind="click: search">Search</button>
   <div id="#movies">
     <ul data-bind="foreach: titles">
-      <li><span data-bind="text: title"> </span> (<span data-bind="text:
+      <li><a data-bind="text: title, attr: { href: url }"></a> (<span data-bind="text:
           year"> </span>) <span data-bind="attr: { id: id }"> </span></li>
     </ul>
   </div>

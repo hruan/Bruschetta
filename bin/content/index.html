@@ -23,10 +23,11 @@
     <div id="movies">
       <ul class="movie" data-bind="foreach: titles">
         <li>
-          <!-- <img data-bind="attr: { src: box_art }" /> -->
+          <img data-bind="attr: { src: box_art }" />
           <a data-bind="text: title, attr: { href: url }"></a>
           <p class="release-year" data-bind="text: year"></p>
           <p class="review" data-bind="attr: { id: id }"></p>
+          <p class="synopsis" data-bind="text: synopsis"></p>
         </li>
       </ul>
     </div>

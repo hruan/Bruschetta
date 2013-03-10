@@ -1,6 +1,17 @@
+body {
+	background-image: url('/img/bruschetta.jpg');
+	background-size: 120% auto;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+}
+
 .movie {
 	box-shadow: 0px 0px 3px #a0a0a0;
 	margin: 1.5em 0;
+}
+
+ul.movie a {
+	color: rgb(192, 0, 0);
 }
 
 ul.movie li {
@@ -11,7 +22,7 @@ ul.movie li {
 }
 
 ul.movie li:nth-child(even) {
-	background-color: #efefef;
+	background-color: #f1f0f0;
 }
 
 ul.movie li:nth-child(odd) {

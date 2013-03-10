@@ -13,12 +13,10 @@
     <h1>Bruschetta</h1>
 
     <div class="row">
-      <div class="offset3">
-        <form class="span6 form-search">
-          <input class="span4" placeholder="search for movies by title" id="search" type="text" name="search" data-bind="value: searchTerm">
-          <button class="btn" data-bind="click: search">Search</button>
-        </form>
-      </div>
+      <form class="span12 form-search">
+        <input class="span3" placeholder="search by movie title" id="search" type="text" name="search" data-bind="value: searchTerm">
+        <button class="btn" data-bind="click: search">Search</button>
+      </form>
     </div>
     <div id="movies">
       <ul class="movie" data-bind="foreach: titles">

@@ -24,8 +24,9 @@
           <img data-bind="attr: { src: box_art }" />
           <a data-bind="text: title, attr: { href: url }"></a>
           <p class="release-year" data-bind="text: year"></p>
-          <p class="review" data-bind="attr: { id: id }"></p>
           <p class="synopsis" data-bind="text: synopsis"></p>
+          <p class="nf-score">Netflix rating: <span data-bind="text: rating"></span></p>
+          <p class="rt-score" data-bind="visible: $parent.hasReview(id), attr: { id: id }"></p>
         </li>
       </ul>
     </div>

@@ -3,9 +3,11 @@
     var viewModel = {
         titles: ko.mapping.fromJS([]),
         searchTerm: ko.observable(),
+        reviews: ko.observable(),
         search: function() {
             var searchTerm = this.searchTerm();
             if (searchTerm === undefined || searchTerm === '') return;
+            this.reviews({});
             $.ajax({
                 url: 'api/1/search?q=' + searchTerm,
                 context: this,
@@ -17,16 +19,29 @@
         },
         searchCallback: function(result) {
             ko.mapping.fromJS(result, this.titles);
-            result.forEach(this.getReviews);
+            result.forEach(this.getReviews, this);
         },
         getReviews: function(elem) {
             var url = 'api/1/reviews/' + elem.id;
-            $.getJSON(url, function(data) {
-                $("#" + elem.id).html("Critics score: " + data.ratings.critics_score);
+            $.ajax({
+                url: url,
+                context: this,
             })
-            .error(function() {
-                $("#" + elem.id).html("No reviews!");
+            .success(function(data) {
+                if (data.ratings.critics_score > 0) {
+                    this.reviews()[elem.id] = data;
+                    this.showReview(elem.id);
+                }
             });
+        },
+        hasReview: function(id) {
+            return this.reviews[id] != "undefined";
+        },
+        showReview: function(id) {
+            if (this.hasReview(id)) {
+                var data = this.reviews()[id];
+                $("#" + id).html("Rotten Tomatoes score: " + data.ratings.critics_score);
+            }
         }
     };
 

@@ -72,27 +72,32 @@ func (m *Movie) AsJson() []byte {
 }
 
 // Match m against title and year; expects title to be "hyphenified"
-func (m *Movie) match(title, year string) bool {
+func (m *Movie) match(title string, year int) bool {
 	return m.matchTitle(title) && m.matchYear(year)
 }
 
 func (m *Movie) matchTitle(title string) bool {
 	t := hyphenify(m.Title)
 	//log.Printf("Comparing %s with %s\n", t, title)
-	return t == title
+	return strings.Contains(t, title)
 }
 
-func (m *Movie) matchYear(year string) bool {
+func (m *Movie) matchYear(year int) bool {
 	const sep = "-"
+	const grace = 2;
 
 	rdate, ok := m.Released["theater"]
 	if !ok || !strings.Contains(rdate, sep) {
 		return false
 	}
 
-	_year := strings.Split(rdate, "-")[0]
+	_year, err := strconv.Atoi(strings.Split(rdate, "-")[0])
+	if err != nil {
+		log.Printf("Couldn't find release year: %s\n", err)
+		return false
+	}
 	//log.Printf("Comparing %s with %s\n", _year, year)
-	return year == _year
+	return _year >= year-grace && _year <= year+grace
 }
 
 // Remove all non-alphanumerical characters and replace whitespaces with "-"
@@ -173,9 +178,8 @@ func escapeQuery(s string) string {
 
 func filter(movies []Movie, t *netflix.Title) (match *Movie, err error) {
 	ht := hyphenify(t.Title)
-	year := strconv.Itoa(t.Year)
 	for _, m := range movies {
-		if m.match(ht, year) {
+		if m.match(ht, t.Year) {
 			match = new(Movie)
 			*match = m
 			return

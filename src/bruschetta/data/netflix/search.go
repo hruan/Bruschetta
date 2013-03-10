@@ -45,7 +45,7 @@ func Search(title string) (titles []Title, err error) {
 	var rows *sql.Rows
 	// TODO: Escape NUL, \, ', ", %, _, [, and ]
 	s := `%` + title + `%`
-	rows, err = conn.Query(`SELECT id, title, year, play_url, rating, box_art, synopsis FROM titles WHERE title ILIKE $1`, s)
+	rows, err = conn.Query(`SELECT id, title, year, play_url, rating, box_art, synopsis FROM titles WHERE title ILIKE $1 ORDER BY rating DESC`, s)
 
 	if err != nil {
 		log.Printf("Query failed: %s\n", err)

@@ -39,9 +39,33 @@
         },
         showReview: function(id) {
             if (this.hasReview(id)) {
-                var data = this.reviews()[id];
-                $("#" + id).html("Rotten Tomatoes score: " + data.ratings.critics_score);
+                var score = this.reviews()[id].ratings.critics_score;
+                var imgFresh = '<img class="rt-rating" src="/img/fresh.png" />';
+                var imgRotten = '<img class="rt-rating" src="/img/rotten.png" />';
+                var img = score >= 60 ? imgFresh : imgRotten;
+                $("#" + id).html(img + score + '%');
             }
+        },
+        nfRating: function(rating) {
+            var r = Math.floor(rating());
+            var img = '<img class="star-rating" src="/img/star.png"/>';
+            var imgPartial = '<img class="star-rating partial" src="/img/star-partial.png"/>';
+            var imgEmpty = '<img class="star-rating partial" src="/img/star-empty.png"/>';
+            var html = '';
+
+            for (var i = 0; i < r; i++) {
+                html += img;
+            }
+
+            if (r < rating()) {
+                html += imgPartial;
+            }
+
+            for (var i = 0; i < 5 - Math.ceil(rating()); i++) {
+                html += imgEmpty;
+            }
+
+            return html;
         }
     };
 

@@ -39,9 +39,26 @@ ul.movie .release-year {
 	font-size: large;
 }
 
-ul.movie img {
+ul.movie img.box-art {
 	float: left;
 	margin-right: 2em;
 	box-shadow: 1px 3px 10px rgb(172, 172, 172);
+}
+
+ul.movie p.synopsis {
+	margin: 1em auto;
+}
+
+ul.movie img.star-rating {
+	height: 16px;
+}
+
+ul.movie span.rt-score {
+	font-size: large;
+}
+
+ul.movie img.rt-rating {
+	height: 16px;
+	margin: 0 0.2em 0 2em;
 }
 

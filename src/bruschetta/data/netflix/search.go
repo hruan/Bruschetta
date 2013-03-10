@@ -11,7 +11,7 @@ import (
 
 type (
 	Title struct {
-		Id	int	`json:"id"`
+		Id	string	`json:"id"`
 		Title	string	`json:"title"`
 		Year	int	`json:"year"`
 		Synopsis string	`json:"synopsis"`

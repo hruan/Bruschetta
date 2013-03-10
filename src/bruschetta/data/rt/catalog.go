@@ -186,7 +186,7 @@ func filter(movies []Movie, t *netflix.Title) (match *Movie, err error) {
 		}
 	}
 
-	return nil, &SearchError{id: strconv.Itoa(t.Id)}
+	return nil, &SearchError{id: t.Id}
 }
 
 // Appends RottenTomatoes API key to an URL

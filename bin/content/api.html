@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bruschetta</title>
+  <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+  <link href="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css" rel="stylesheet">
+  <style type="text/css">
+    .subnav {
+      margin-top: 1em;
+    }
+  </style>
+</head>
+
+<body onload="prettyPrint()" data-spy="scroll" data-target=".subnav">
+  <div class="navbar navbar-static-top">
+    <div class="navbar-inner">
+      <a class="brand" href="/">Bruschetta</a>
+      <ul class="nav">
+        <li class="divider-vertical"></li>
+        <li><a href="/">Search</a></li>
+        <li class="active"><a href="#">API</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row-fluid">
+      <div class="span3 subnav">
+        <ul class="span3 nav nav-pills nav-stacked" data-spy="affix" data-offset="30px">
+          <li class="active"><a href="#overview">Overview</a></li>
+          <li><a href="#search-by-title">Search</a></li>
+          <li><a href="#review-by-id">Reviews</a></li>
+        </ul>
+      </div>
+
+      <div class="span9">
+        <h1 id="overview">Bruschetta API</h1>
+        <p>
+          Bruschetta provides two resources through which you can query the
+          Netflix catalog and retrieve Rotten Tomatoes reviews for titles
+          available on Netflix. Both resources respond to <code>GET</code>
+          and returns JSON.
+        </p>
+
+        <h2 id="search-by-title">Search by title</h2>
+        <p>
+          A <code>GET</code> request to <code>/api/1/search?q={query}</code> returns a
+          list of titles that match the query.
+        </p>
+
+<p>Query string <code>q</code> must be present and non-empty. Empty
+<code>q</code> will return <code>400 Bad Request</code>.
+
+<h3>Example</h3>
+<p><code>GET /api/1/search?q=dalmatian</code> returns:</p>
+
+<pre class="prettyprint linenums">
+[
+  {
+    "id": "205534",
+    "title": "101 Dalmatians",
+    "year": 1996,
+    "synopsis": "Dalmatians Pongo and Perdy and their owners are overjoyed by the arrival of 15 puppies. But the evil Cruella De Vil wants to harvest the pups' fur and dognaps the litter. Now, Pongo and Perdy must rally the city's animals to come to their rescue.",
+    "box_art": "http://cdn-0.nflximg.com/images/3485/2293485.jpg",
+    "url": "http://www.netflix.com/Movie/101_Dalmatians/205534",
+    "rating": 3.6
+  }
+]
+</pre>
+
+<h2 id="review-by-id">Review by ID</h2>
+<p>
+A <code>GET</code> request to <code>/api/1/reviews/{id}</code> returns an object containing a summary
+of reviews for a title, identified by its Netflix id, from Rotten Tomatoes. <code>id</code>
+must be present, non-empty and consists of one or more digits. More specifically,
+<code>id</code> must match the regexp pattern <code>\d+</code>. <code>404 Not Found</code>
+is returned if <code>id</code> is invalid.
+</p>
+
+<h3>Example</h3>
+<p><code>GET /api/1/reviews/205534</code> returns:</p>
+<pre class="prettyprint linenums">
+{
+  "id": "9809",
+  "title": "101 Dalmatians",
+  "release_dates": {
+    "dvd": "1998-04-21",
+    "theater": "1996-11-29"
+  },
+  "critics_consensus": "",
+  "ratings": {
+    "critics_rating": "Rotten",
+    "critics_score": 39,
+    "audience_rating": "Spilled",
+    "audience_score": 47
+  },
+  "links": {
+    "alternate": "http://www.rottentomatoes.com/m/1074108-101_dalmatians/",
+    "cast": "http://api.rottentomatoes.com/api/public/v1.0/movies/9809/cast.json",
+    "clips": "http://api.rottentomatoes.com/api/public/v1.0/movies/9809/clips.json",
+    "reviews": "http://api.rottentomatoes.com/api/public/v1.0/movies/9809/reviews.json",
+    "self": "http://api.rottentomatoes.com/api/public/v1.0/movies/9809.json",
+    "similar": "http://api.rottentomatoes.com/api/public/v1.0/movies/9809/similar.json"
+  }
+}
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/lib/jquery-1.9.1.min.js" type="text/javascript"></script>
+  <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+  <script src="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.js"></script>
+</body>
+</html>
+
+<!-- vim: set ts=2 sw=2 sts=2 et: -->

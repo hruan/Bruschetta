@@ -27,7 +27,10 @@
     <div id="movies">
       <ul class="movie" data-bind="foreach: titles">
         <li>
-          <img class="box-art" data-bind="attr: { src: box_art }" />
+          <div class="box-art">
+            <a data-bind="attr: { href: url }"><span class="overlay"></span></a>
+            <img class="box-art" data-bind="attr: { src: box_art }" />
+          </div>
           <a data-bind="text: title, attr: { href: url }"></a>
           <p class="release-year" data-bind="text: year"></p>
           <span class="nf-score" data-bind="html: $parent.nfRating(rating)"></span>

@@ -63,3 +63,19 @@ ul.movie img.rt-rating {
 	margin: 0 0.2em 0 2em;
 }
 
+div.box-art span.overlay {
+	background: url('/img/play.png') center center no-repeat #1d1d1d;
+	position: absolute;
+	height: 281px;
+	width: 197px;
+	opacity: 0;
+	transition: opacity 0.25s ease-out;
+	-webkit-transition: opacity 0.25s ease-out;
+	z-index: 999;
+}
+
+div.box-art span.overlay:hover {
+	opacity: 0.8;
+	transition: opacity 0.25s ease-out;
+	-webkit-transition: opacity 0.25s ease-out;
+}

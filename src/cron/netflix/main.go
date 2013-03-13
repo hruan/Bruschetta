@@ -2,6 +2,7 @@ package main
 
 import (
 	"bruschetta/db"
+	"compress/bzip2"
 	"encoding/json"
 	"encoding/xml"
 	_ "github.com/bmizerany/pq"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -26,7 +28,7 @@ var (
 
 const (
 	credPath = "netflix_credentials.json"
-	dbPath = "db/netflix.db"
+	dbPath = "db/netflix.db.bz2"
 )
 
 type (
@@ -156,9 +158,7 @@ func fetchFromFile() io.ReadCloser {
 	return f
 }
 
-func update(r io.ReadCloser, w chan<- titleIndex) {
-	defer r.Close()
-
+func update(r io.Reader, w chan<- titleIndex) {
 	decoder := xml.NewDecoder(r)
 	for t, err := decoder.Token(); err == nil; t, err = decoder.Token() {
 		switch s := t.(type) {
@@ -258,9 +258,17 @@ func main() {
 
 	if fetch {
 		log.Println("Fetching catalog from Netflix")
-		update(fetchFromNetflix(), c)
+		r := fetchFromNetflix()
+		defer r.Close()
+		update(r, c)
 	} else {
 		log.Println("Fetching catalog from file")
-		update(fetchFromFile(), c)
+		if filepath.Ext(dbPath) == ".bz2" {
+			f := fetchFromFile()
+			defer f.Close()
+			update(bzip2.NewReader(f), c)
+		} else {
+			log.Fatalln("Catalog isn't a .bz2 file!")
+		}
 	}
 }

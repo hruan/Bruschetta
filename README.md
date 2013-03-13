@@ -19,10 +19,10 @@ and some JavaScript, mostly as a learning exercise for [Go][3].
 Bruschetta is assumed to reside in `DIR`.
 
 1. Set `GOPATH` to `DIR`
-2. Build the tool used to populate `titles`-table: `go install cron/netflix`
-3. Run the tool to populate database with Netflix catalog; use option `--help`
-   see command line options
-4. Build Bruschetta: `go install bruschetta`
+2. Get dependencies: `go get cron/netflix bruschetta`
+3. Build binaries: `go install cron/netflix bruschetta`
+4. Run the `netflix` tool to populate database with Netflix catalog; use
+   option `--help` see command line options
 5. Run Bruschetta; again, use option `--help` for command line options
 6. Point your browser to port 8888 on the host running Bruschetta
 

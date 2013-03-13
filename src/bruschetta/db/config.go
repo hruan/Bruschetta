@@ -39,7 +39,7 @@ func buildConnStr() string {
 }
 
 func init() {
-	flag.StringVar(&dbhost, "dbhost", "", "port number of database")
+	flag.StringVar(&dbhost, "dbhost", "localhost", "host of database")
 	flag.StringVar(&dbport, "dbport", "5432", "port number of database")
 	flag.StringVar(&dbname, "dbname", "bruschetta", "name of the database")
 	flag.StringVar(&dbuser, "dbuser", "", "username for database")

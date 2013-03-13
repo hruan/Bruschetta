@@ -28,7 +28,7 @@ var (
 
 const (
 	credPath = "netflix_credentials.json"
-	dbPath = "db/netflix.db.bz2"
+	dbPath   = "db/netflix.db.bz2"
 )
 
 type (

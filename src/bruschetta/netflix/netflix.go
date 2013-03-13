@@ -41,6 +41,8 @@ func (t *Title) AsJson() []byte {
 	return json
 }
 
+// Search Netflix catalog for movies matching title. Returns results in a
+// slice, if any.
 func Search(title string) (titles []Title, err error) {
 	var rows *sql.Rows
 	// TODO: Escape NUL, \, ', ", %, _, [, and ]
@@ -70,6 +72,7 @@ func Search(title string) (titles []Title, err error) {
 	return
 }
 
+// Get movie data by id
 func Get(id string) (t *Title, err error) {
 	id = strings.TrimSpace(id)
 	if id == "" {

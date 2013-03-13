@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bruschetta/data/netflix"
-	"bruschetta/data/rt"
+	"bruschetta/netflix"
+	"bruschetta/rt"
 	"encoding/json"
 	"flag"
 	"github.com/gorilla/mux"

@@ -1,7 +1,7 @@
 package rt
 
 import (
-	"bruschetta/data/netflix"
+	"bruschetta/netflix"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -25,8 +25,6 @@ type (
 		Id        string            `json:"id"`
 		Title     string            `json:"title"`
 		Released  map[string]string `json:"release_dates"`
-		//Directors map[string]string `json:"abridged_directors"`
-		//Cast      map[string]string `json:"abridged_cast"`
 		Consensus string            `json:"critics_consensus"`
 		Rating    Rating            `json:"ratings"`
 		Links     map[string]string `json:"links"`
@@ -111,6 +109,8 @@ func hyphenify(s string) string {
 	return hyphened
 }
 
+// Search RT for a movie using a Netflix id. Returns review data for the first
+// movie with matching year and title, if any.
 func Search(id string) (*Movie, error) {
 	t, err := netflix.Get(id)
 	if err != nil {
@@ -144,6 +144,7 @@ func rtSearch(t *netflix.Title) (io.ReadCloser, error) {
 		return nil, err
 	}
 
+	// Build RT request URL
 	appendKey(req.URL)
 	v := url.Values{}
 	v.Set("limit", "10")
@@ -152,7 +153,7 @@ func rtSearch(t *netflix.Title) (io.ReadCloser, error) {
 
 	// Wait for a token to become available before sending the request
 	<-bucket
-	log.Printf("Sending request: %s\n", req.URL)
+	//log.Printf("Sending request: %s\n", req.URL)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("Client request failed: %s\n")
@@ -162,16 +163,17 @@ func rtSearch(t *netflix.Title) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
+// Join s with '+', removing some undesired characters
 func escapeQuery(s string) string {
 	if strings.TrimSpace(s) == "" {
 		return ""
 	}
 
-	alphanum := regexp.MustCompile(`[^\w-.~]+`)
+	filter := regexp.MustCompile(`[^\w-.~]+`)
 	words := strings.Fields(s)
 	var filtered []string
 	for _, w := range words {
-		filtered = append(filtered, alphanum.ReplaceAllString(w, ""))
+		filtered = append(filtered, filter.ReplaceAllString(w, ""))
 	}
 	return strings.Join(filtered, "+")
 }
